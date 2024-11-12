@@ -22,15 +22,15 @@ are redirected to the console.
 
 ### Preparing overlays
 
-If you need to make any changes to the basic configuration, then you need to
+If you need to make any changes to the basic configuration, then you must to
 create a project with the configuration.
 
 * Create a project with a configuration and create an overlay there referring to
   this base
 * If necessary, you can apply a patch to change:
-* resource request and limit
-* storage class
-* storage size
+* Resource request and limit
+* Storage class
+* Storage size
 * You can also make changes to the configuration files.
 
 At the current moment, the deployment of this database is maximally configured
