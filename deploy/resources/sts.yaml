@@ -1,0 +1,157 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nexus-repository-manager
+  namespace: nexus
+spec:
+  serviceName: nexus-repository-manager
+  replicas: 1
+  minReadySeconds: 0
+  revisionHistoryLimit: 5
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+  template:
+    spec:
+      securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001
+      containers:
+        - name: nexus
+          image: docker.io/sentoz/nexus-oss-docker
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 8081
+            name: nexus
+            protocol: TCP
+          resources:
+            limits:
+              cpu: "8"
+              memory: 12Gi
+            requests:
+              cpu: "6"
+              memory: 12Gi
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /service/rest/v1/status
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /service/rest/v1/status/writable
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            runAsNonRoot: true
+          volumeMounts:
+            - name: nexus-db
+              mountPath: /opt/sonatype/sonatype-work/nexus3/db
+            - name: nexus-blobs
+              mountPath: /opt/sonatype/sonatype-work/nexus3/blobs
+            - name: nexus-keystores
+              mountPath: /opt/sonatype/sonatype-work/nexus3/keystores
+            - name: nexus-log
+              mountPath: /opt/sonatype/sonatype-work/nexus3/log
+            - name: nexus-work-logback
+              mountPath: /opt/sonatype/sonatype-work/nexus3/etc/logback
+            - name: nexus-tmp
+              mountPath: /opt/sonatype/sonatype-work/nexus3/tmp
+            - name: nexus-properties
+              mountPath: /opt/sonatype/sonatype-work/nexus3/etc/nexus.properties
+              subPath: nexus.properties
+            - name: nexus-vmoptions
+              mountPath: /opt/sonatype/nexus/bin/nexus.vmoptions
+              subPath: nexus.vmoptions
+            - name: logback
+              mountPath: /opt/sonatype/nexus/etc/logback/logback.xml
+              subPath: logback.xml
+            - name: logback-access
+              mountPath: /opt/sonatype/nexus/etc/logback/logback-access.xml
+              subPath: logback-access.xml
+            - name: nexus-secret-key
+              mountPath: /opt/sonatype/sonatype-work/nexus3/etc/secret.json
+              subPath: secret.json
+      volumes:
+        - name: nexus-db
+          persistentVolumeClaim:
+            claimName: nexus-db
+        - name: nexus-blobs
+          persistentVolumeClaim:
+            claimName: nexus-blobs
+        - name: nexus-keystores
+          persistentVolumeClaim:
+            claimName: nexus-keystores
+        - name: nexus-log
+          emptyDir: {}
+        - name: nexus-work-logback
+          emptyDir: {}
+        - name: nexus-tmp
+          emptyDir: {}
+        - name: nexus-properties
+          configMap:
+            name: nexus
+            items:
+              - key: nexus.properties
+                path: nexus.properties
+        - name: nexus-vmoptions
+          configMap:
+            name: nexus
+            items:
+              - key: nexus.vmoptions
+                path: nexus.vmoptions
+        - name: logback
+          configMap:
+            name: nexus
+            items:
+              - key: logback.xml
+                path: logback.xml
+        - name: logback-access
+          configMap:
+            name: nexus
+            items:
+              - key: logback-access.xml
+                path: logback-access.xml
+        - name: nexus-secret-key
+          secret:
+            defaultMode: 420
+            secretName: nexus-secret-key
+            optional: true
+  volumeClaimTemplates:
+    - metadata:
+        name: nexus-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "10Gi"
+    - metadata:
+        name: nexus-blobs
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "5Gi"
+    - metadata:
+        name: nexus-keystores
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "1Gi"

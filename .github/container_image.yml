@@ -1,0 +1,104 @@
+name: Docker Image CI
+on:
+  push:
+    tags:
+      - '*.**.**'
+    paths-ignore:
+      - '**.md'
+      - '**.png'
+      - '**.jpg'
+      - '**.svg'
+      - '**.yaml'
+      - CNAME
+      - LICENSE
+
+jobs:
+  mdlint:
+    name: MarkdownLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: markdownlint-cli
+        uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: .
+          config_file: .markdownlint.yaml
+          ignore_files: ./LICENSE
+  build_image:
+    name: Building a container image
+    needs: [mdlint]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Containerfile
+      - name: Log in to Docker Hub Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to GitHub Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ github.repository }}
+            ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+      - name: Build and push Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          file: Containerfile
+
+  release:
+    needs:
+      - build_image
+    name: Release
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    steps:
+      - name: Set env
+        id: env
+        run: |
+          echo "PROJECT_NAME=${GITHUB_REF#refs/*/}"  >> $GITHUB_OUTPUT
+          echo "PROJECT_BRANCH=${GITHUB_REF#refs/heads/}"  >> $GITHUB_OUTPUT
+          echo "PROJECT_TAG=${GITHUB_REF#refs/tags/}"  >> $GITHUB_OUTPUT
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Container image:
+
+            * `docker pull ghcr.io/sentoz/nexus-oss-docker:${{ steps.env.outputs.PROJECT_TAG }}`
+            * `docker pull docker.io/sentoz/nexus-oss-docker:${{ steps.env.outputs.PROJECT_TAG }}`
+
+            [CHANGELOG.md](https://github.com/sentoz/nexus-oss-docker/blob/${{ steps.env.outputs.PROJECT_TAG }}/CHANGELOG.md)
+          draft: false
+          prerelease: false

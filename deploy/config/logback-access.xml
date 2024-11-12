@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<configuration>
+  <appender name="request.console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="org.sonatype.nexus.pax.logging.AccessPatternLayoutEncoder">
+      <pattern>%clientHost %l %user [%date] "%requestURL" %statusCode %header{Content-Length} %bytesSent %elapsedTime "%header{User-Agent}" [%thread]</pattern>
+    </encoder>
+  </appender>
+
+  <appender-ref ref="request.console"/>
+</configuration>

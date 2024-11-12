@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nexus
+buildMetadata:
+  - managedByLabel
+
+resources:
+  - resources/sts.yaml
+  - resources/svc.yaml
+
+images:
+  - name: docker.io/sentoz/nexus-oss-docker
+    newTag: &version 3.74.0
+
+configMapGenerator:
+  - files:
+    - config/nexus.vmoptions
+    - config/nexus.properties
+    - config/logback.xml
+    - config/logback-access.xml
+    name: nexus
+    behavior: create
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: nexus-repository-manager
+      app.kubernetes.io/app: nexus
+    includeSelectors: true
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/version: *version

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
+  <jmxConfigurator/>
+
+  <appender name="osgi" class="org.ops4j.pax.logging.logback.internal.bridges.PaxAppenderDelegate">
+    <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
+  </appender>
+
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
+    <encoder>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="jvm" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="tasklogfile" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="org.sonatype.nexus.pax.logging.TaskLogsFilter" />
+    <encoder>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="console"/>
+  </root>
+
+  <logger name="outboundRequests">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="auditlog" additivity="false">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="blobstore-reconciliation-log" additivity="false">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="org.eclipse.jetty" level="INFO">
+    <appender-ref ref="console" />
+  </logger>
+  <logger name="org.eclipse.jetty.webapp.StandardDescriptorProcessor" level="WARN">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="org.apache.aries" level="WARN">
+    <appender-ref ref="console" />
+  </logger>
+  <logger name="org.apache.felix" level="WARN">
+    <appender-ref ref="console" />
+  </logger>
+  <logger name="org.apache.karaf" level="WARN">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="com.sonatype.nexus.migration" level="INFO">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="com.amazonaws.internal.InstanceMetadataServiceResourceFetcher" level="ERROR">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="com.amazonaws.util.EC2MetadataUtils" level="ERROR">
+    <appender-ref ref="console" />
+  </logger>
+
+  <logger name="org.sonatype" level="INFO"/>
+  <logger name="org.apache" level="INFO"/>
+  <logger name="com.sonatype" level="INFO"/>
+  <logger name="org.eclipse" level="INFO"/>
+  <logger name="org.ops4j.pax" level="INFO"/>
+  <logger name="org.hibernate" level="INFO"/>
+  <logger name="uk.org" level="WARN"/>
+
+</configuration>
