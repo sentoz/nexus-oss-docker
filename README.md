@@ -15,8 +15,8 @@ fix to issue requiring permissions on mount directories.
   * [Creating a secret](#creating-a-secret)
   * [Deploy](#deploy)
 
-This deployment is based on [kustomize][]. It features logging to disk, all logs are
-redirected to the console.
+This deployment is based on [kustomize][]. It features logging to disk, all logs
+are redirected to the console.
 
 ## Preparation and installation
 
